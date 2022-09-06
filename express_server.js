@@ -22,6 +22,22 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
+class User {
+  constructor(id, email, password) {
+    this.id = id,
+    this.email = email,
+    this.password = password
+  }
+}
+
+const users = {
+  sample: {
+    id: 'sample',
+    email: 'sample@sample.com',
+    password: '123mypassword'
+  }
+}
+
 //go to homepage
 app.get("/", (req, res) => {
   res.redirect('/urls');
@@ -29,9 +45,10 @@ app.get("/", (req, res) => {
 
 //go to homepage
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase, username: undefined};
+  const templateVars = { urls: urlDatabase, user: undefined};
   if (req.cookies) {
-    templateVars.username = req.cookies["username"];
+    const userID = req.cookies["user_id"];
+    templateVars.user = users[userID];
   }
   res.render('urls_index', templateVars);
 });
@@ -54,18 +71,20 @@ app.get("/u/:id", (req, res) => {
 
 //go to create page
 app.get("/urls/new", (req, res) => {
-  const templateVars = { username: undefined };
+  const templateVars = { user: undefined };
   if (req.cookies) {
-    templateVars.username = req.cookies["username"];
+    const userID = req.cookies["user_id"];
+    templateVars.user = users[userID];
   }
   res.render("urls_new", templateVars);
 });
 
 //open link for short URL
 app.get("/urls/:id", (req, res) => {
-  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id], username: undefined };
+  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id], user: undefined };
   if (req.cookies) {
-    templateVars.username = req.cookies["username"];
+    const userID = req.cookies["user_id"];
+    templateVars.user = users[userID];
   }
   res.render('urls_show', templateVars);
 });
@@ -85,24 +104,34 @@ app.post("/urls/:id/", (req, res) => {
 
 //login
 app.post("/login", (req, res) => {
-  const username = req.body.username;
-  res.cookie('username', username);
+  //const username = req.body.username;
+  //res.cookie('username', username);
   res.redirect('/urls');
 });
 
 //logout
 app.post("/logout", (req, res) => {
-  res.clearCookie('username');
+  res.clearCookie('user_id');
   res.redirect('/urls');
 });
 
 //go to register
 app.get("/register", (req, res) => {
-  const templateVars = { username: undefined };
+  const templateVars = { user: undefined };
   if (req.cookies) {
-    templateVars.username = req.cookies["username"];
+    const userID = req.cookies["user_id"];
+    templateVars.user = users[userID];
   }
   res.render("urls_register", templateVars);
+});
+
+//adds new user with email & password, stores to users database
+app.post("/register", (req, res) => {
+  newID = generateRandomString();
+  users[newID] = new User(newID, req.body.email, req.body.password);
+  res.cookie('user_id', newID);
+  console.log(users);
+  res.redirect(`/urls/`);
 });
 
 app.listen(PORT, () => {
