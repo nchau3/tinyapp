@@ -19,9 +19,9 @@
         <a class="nav-item nav-link" href="/register">Register</a>
       </div>
     </div>
-    <% if (username) { %>
+    <% if (user) { %>
     <form class="form-inline" method="POST" action="/logout">
-      <label class="col-form-label" style="margin-right: 10px"><b>Logged in as: <%= username %>!</b></label>
+      <label class="col-form-label" style="margin-right: 10px"><b>Logged in as: <%= user.email %>!</b></label>
       <button class="btn btn-dark" type="submit">Logout</button>
     </form>
     <% } else { %>
