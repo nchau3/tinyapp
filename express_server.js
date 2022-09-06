@@ -17,6 +17,15 @@ function generateRandomString() {
   return newString;
 };
 
+function userLookupByEmail(email) {
+  for (user in users) {
+    if (users[user].email === email) {
+      return user;
+    }
+  }
+  return null;
+};
+
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
@@ -24,9 +33,9 @@ const urlDatabase = {
 
 class User {
   constructor(id, email, password) {
-    this.id = id,
-    this.email = email,
-    this.password = password
+    this.id = id;
+    this.email = email;
+    this.password = password;
   }
 }
 
@@ -127,10 +136,19 @@ app.get("/register", (req, res) => {
 
 //adds new user with email & password, stores to users database
 app.post("/register", (req, res) => {
-  newID = generateRandomString();
+  //empty fields, return error
+  if (!req.body.email || !req.body.password) {
+    res.statusCode = 400;
+    res.send("Please enter email and password")
+  }
+  //email already exists, return error
+  if (userLookupByEmail(req.body.email)) {
+    res.statusCode = 400;
+    res.send("This email already exists.")
+  }
+  const newID = generateRandomString();
   users[newID] = new User(newID, req.body.email, req.body.password);
   res.cookie('user_id', newID);
-  console.log(users);
   res.redirect(`/urls/`);
 });
 
