@@ -1,14 +1,14 @@
 const express = require("express");
 const app = express();
 const cookieParser = require("cookie-parser");
-app.use(cookieParser())
+app.use(cookieParser());
 const PORT = 8080; // default port 8080
 
 app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
 
-function generateRandomString() {
-  let charSet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890'
+const generateRandomString = function() {
+  let charSet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890';
   let newString = '';
   for (let i = 0; i < 6; i++) {
     const randomIndex = Math.floor(Math.random() * charSet.length);
@@ -17,8 +17,8 @@ function generateRandomString() {
   return newString;
 };
 
-function userLookupByEmail(email) {
-  for (user in users) {
+const userLookupByEmail = function(email) {
+  for (let user in users) {
     if (users[user].email === email) {
       return user;
     }
@@ -45,7 +45,7 @@ const users = {
     email: 'sample@sample.com',
     password: '123mypassword'
   }
-}
+};
 
 //go to homepage
 app.get("/", (req, res) => {
@@ -67,7 +67,7 @@ app.get("/urls", (req, res) => {
 app.post("/urls", (req, res) => {
   if (!req.cookies["user_id"]) {
     res.statusCode = 403;
-    res.send("Please login or sign up to shorten URLs.")
+    res.send("Please login or sign up to shorten URLs.");
   }
   const newID = generateRandomString();
   urlDatabase[newID] = req.body.longURL;
@@ -80,7 +80,7 @@ app.get("/u/:id", (req, res) => {
   const longURL = urlDatabase[key];
   if (!longURL) {
     res.statusCode = 404;
-    res.send("Requested URL does not exist.")
+    res.send("Requested URL does not exist.");
   } else {
     res.redirect(longURL);
   }
@@ -137,7 +137,7 @@ app.post("/login", (req, res) => {
   const checkUser = userLookupByEmail(req.body.email);
   if (!checkUser) {
     res.statusCode = 403;
-    res.send("Email not found.")
+    res.send("Email not found.");
   }
   if (users[checkUser].password !== req.body.password) {
     res.statusCode = 403;
@@ -172,12 +172,12 @@ app.post("/register", (req, res) => {
   //empty fields, return error
   if (!req.body.email || !req.body.password) {
     res.statusCode = 400;
-    res.send("Please enter email and password")
+    res.send("Please enter email and password");
   }
   //email already exists, return error
   if (userLookupByEmail(req.body.email)) {
     res.statusCode = 400;
-    res.send("This email already exists.")
+    res.send("This email already exists.");
   }
   const newID = generateRandomString();
   users[newID] = new User(newID, req.body.email, req.body.password);
