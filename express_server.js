@@ -26,9 +26,22 @@ const userLookupByEmail = function(email) {
   return null;
 };
 
+const urlDatabaseByUser = function(userID) {
+  let myDatabase = {};
+  for (let url in urlDatabase) {
+    const userMatch = urlDatabase[url]['userID'];
+    if (userMatch === userID) {
+      myDatabase[url] = urlDatabase[url];
+    }
+  }
+  return myDatabase;
+};
+
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  "b2xVn2": {
+    longURL: "http://www.lighthouselabs.ca",
+    userID: 'testUser'
+  }
 };
 
 class User {
@@ -36,6 +49,13 @@ class User {
     this.id = id;
     this.email = email;
     this.password = password;
+  }
+}
+
+class URL {
+  constructor(longURL, userID) {
+    this.longURL = longURL;
+    this.userID = userID;
   }
 }
 
@@ -54,11 +74,11 @@ app.get("/", (req, res) => {
 
 //go to homepage
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase, user: undefined};
-  console.log(req.cookies["user_id"]);
-  if (req.cookies) {
+  const templateVars = { urls: undefined, user: undefined};
+  if (req.cookies["user_id"]) {
     const userID = req.cookies["user_id"];
     templateVars.user = users[userID];
+    templateVars.urls = urlDatabaseByUser(userID);
   }
   res.render('urls_index', templateVars);
 });
@@ -69,21 +89,10 @@ app.post("/urls", (req, res) => {
     res.statusCode = 403;
     res.send("Please login or sign up to shorten URLs.");
   }
+  const userID = req.cookies["user_id"];
   const newID = generateRandomString();
-  urlDatabase[newID] = req.body.longURL;
+  urlDatabase[newID] = new URL(req.body.longURL, userID);
   res.redirect(`/urls/${newID}`);
-});
-
-//go to long URL
-app.get("/u/:id", (req, res) => {
-  const key = req.params.id;
-  const longURL = urlDatabase[key];
-  if (!longURL) {
-    res.statusCode = 404;
-    res.send("Requested URL does not exist.");
-  } else {
-    res.redirect(longURL);
-  }
 });
 
 //go to create page
@@ -100,14 +109,17 @@ app.get("/urls/new", (req, res) => {
   res.render("urls_new", templateVars);
 });
 
-//open link for short URL
-app.get("/urls/:id", (req, res) => {
-  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id], user: undefined };
-  if (req.cookies) {
-    const userID = req.cookies["user_id"];
-    templateVars.user = users[userID];
+
+//go to long URL
+app.get("/u/:id", (req, res) => {
+  const key = req.params.id;
+  const longURL = urlDatabase[key];
+  if (!longURL) {
+    res.statusCode = 404;
+    res.send("Requested URL does not exist.");
+  } else {
+    res.redirect(longURL);
   }
-  res.render('urls_show', templateVars);
 });
 
 //delete URL
@@ -165,6 +177,21 @@ app.get("/register", (req, res) => {
     templateVars.user = users[userID];
   }
   res.render("urls_register", templateVars);
+});
+
+//open link after short URL creation
+app.get("/urls/:id", (req, res) => {
+  const id = req.params.id;
+  const templateVars = { 
+    id: id, 
+    longURL: (urlDatabase[id]) ? urlDatabase[id].longURL : undefined,
+    user: undefined 
+  };
+  if (req.cookies) {
+    const userID = req.cookies["user_id"];
+    templateVars.user = users[userID];
+  }
+  res.render('urls_show', templateVars);
 });
 
 //adds new user with email & password, stores to users database
