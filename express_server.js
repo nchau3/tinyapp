@@ -55,6 +55,7 @@ app.get("/", (req, res) => {
 //go to homepage
 app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase, user: undefined};
+  console.log(req.cookies["user_id"]);
   if (req.cookies) {
     const userID = req.cookies["user_id"];
     templateVars.user = users[userID];
@@ -64,6 +65,10 @@ app.get("/urls", (req, res) => {
 
 //create new URL
 app.post("/urls", (req, res) => {
+  if (!req.cookies["user_id"]) {
+    res.statusCode = 403;
+    res.send("Please login or sign up to shorten URLs.")
+  }
   const newID = generateRandomString();
   urlDatabase[newID] = req.body.longURL;
   res.redirect(`/urls/${newID}`);
@@ -73,13 +78,20 @@ app.post("/urls", (req, res) => {
 app.get("/u/:id", (req, res) => {
   const key = req.params.id;
   const longURL = urlDatabase[key];
-  if (longURL !== undefined) {
+  if (!longURL) {
+    res.statusCode = 404;
+    res.send("Requested URL does not exist.")
+  } else {
     res.redirect(longURL);
   }
 });
 
 //go to create page
 app.get("/urls/new", (req, res) => {
+  //login before creating new urls
+  if (!req.cookies["user_id"]) {
+    res.redirect('/login');
+  }
   const templateVars = { user: undefined };
   if (req.cookies) {
     const userID = req.cookies["user_id"];
@@ -113,15 +125,14 @@ app.post("/urls/:id/", (req, res) => {
 
 //go to login page
 app.get("/login", (req, res) => {
-  const templateVars = { user: undefined };
-  if (req.cookies) {
-    const userID = req.cookies["user_id"];
-    templateVars.user = users[userID];
+  if (req.cookies["user_id"]) {
+    res.redirect('/urls');
   }
+  const templateVars = { user: undefined };
   res.render("urls_login", templateVars);
 });
 
-//login PLACEHOLDER
+//login
 app.post("/login", (req, res) => {
   const checkUser = userLookupByEmail(req.body.email);
   if (!checkUser) {
@@ -133,8 +144,7 @@ app.post("/login", (req, res) => {
     res.send("Password does not match for his email address.");
   }
   res.cookie('user_id', checkUser);
-  const templateVars = { urls: urlDatabase, user: users[checkUser]};
-  res.render('urls_index', templateVars);
+  res.redirect('/urls');
 });
 
 //logout
@@ -143,8 +153,12 @@ app.post("/logout", (req, res) => {
   res.redirect('/urls');
 });
 
-//go to register
+//go to register page CHANGE
 app.get("/register", (req, res) => {
+  //redirect if logged in
+  if (req.cookies["user_id"]) {
+    res.redirect('/urls');
+  }
   const templateVars = { user: undefined };
   if (req.cookies) {
     const userID = req.cookies["user_id"];
