@@ -59,7 +59,6 @@ app.get("/urls", (req, res) => {
     const userID = req.cookies["user_id"];
     templateVars.user = users[userID];
   }
-  console.log(templateVars)
   res.render('urls_index', templateVars);
 });
 
@@ -124,9 +123,18 @@ app.get("/login", (req, res) => {
 
 //login PLACEHOLDER
 app.post("/login", (req, res) => {
-  const templateVars = { user: undefined };
-  templateVars.user = req.body.email;
-  res.redirect('/urls');
+  const checkUser = userLookupByEmail(req.body.email);
+  if (!checkUser) {
+    res.statusCode = 403;
+    res.send("Email not found.")
+  }
+  if (users[checkUser].password !== req.body.password) {
+    res.statusCode = 403;
+    res.send("Password does not match for his email address.");
+  }
+  res.cookie('user_id', checkUser);
+  const templateVars = { urls: urlDatabase, user: users[checkUser]};
+  res.render('urls_index', templateVars);
 });
 
 //logout
