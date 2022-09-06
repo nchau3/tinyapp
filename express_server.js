@@ -59,6 +59,7 @@ app.get("/urls", (req, res) => {
     const userID = req.cookies["user_id"];
     templateVars.user = users[userID];
   }
+  console.log(templateVars)
   res.render('urls_index', templateVars);
 });
 
@@ -108,13 +109,23 @@ app.post("/urls/:id/delete", (req, res) => {
 app.post("/urls/:id/", (req, res) => {
   const id = req.params.id;
   urlDatabase[id] = req.body.updatedURL;
-  res.redirect(`/urls/`);
+  res.redirect('/urls');
 });
 
-//login
+//go to login page
+app.get("/login", (req, res) => {
+  const templateVars = { user: undefined };
+  if (req.cookies) {
+    const userID = req.cookies["user_id"];
+    templateVars.user = users[userID];
+  }
+  res.render("urls_login", templateVars);
+});
+
+//login PLACEHOLDER
 app.post("/login", (req, res) => {
-  //const username = req.body.username;
-  //res.cookie('username', username);
+  const templateVars = { user: undefined };
+  templateVars.user = req.body.email;
   res.redirect('/urls');
 });
 
