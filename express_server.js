@@ -26,7 +26,7 @@ const userLookupByEmail = function(email) {
   return null;
 };
 
-const urlDatabaseByUser = function(userID) {
+const urlsForUser = function(userID) {
   let myDatabase = {};
   for (let url in urlDatabase) {
     const userMatch = urlDatabase[url]['userID'];
@@ -78,17 +78,13 @@ app.get("/urls", (req, res) => {
   if (req.cookies["user_id"]) {
     const userID = req.cookies["user_id"];
     templateVars.user = users[userID];
-    templateVars.urls = urlDatabaseByUser(userID);
+    templateVars.urls = urlsForUser(userID);
   }
   res.render('urls_index', templateVars);
 });
 
 //create new URL
 app.post("/urls", (req, res) => {
-  if (!req.cookies["user_id"]) {
-    res.statusCode = 403;
-    res.send("Please login or sign up to shorten URLs.");
-  }
   const userID = req.cookies["user_id"];
   const newID = generateRandomString();
   urlDatabase[newID] = new URL(req.body.longURL, userID);
@@ -124,13 +120,51 @@ app.get("/u/:id", (req, res) => {
 
 //delete URL
 app.post("/urls/:id/delete", (req, res) => {
+  //must be logged in
+  if (!req.cookies["user_id"]) {
+    res.statusCode = 403;
+    res.send("Please login to continue.");
+  }
+  const id = req.params.id;
+  const userID = req.cookies["user_id"];
+
+  //url must exist in database
+  if (!urlDatabase[id]) {
+    res.statusCode = 404;
+    res.send("Requested URL does not exist.");
+  }
+  //url must be associated with user
+  if (urlDatabase[id].userID !== userID) {
+    res.statusCode = 403;
+    res.send("This URL is not associated with this account.");
+  }
+
   delete urlDatabase[req.params.id];
   res.redirect('/urls');
 });
 
 //update URL
 app.post("/urls/:id/", (req, res) => {
+  //must be logged in
+  if (!req.cookies["user_id"]) {
+    res.statusCode = 403;
+    res.send("Please login to continue.");
+  }
+
   const id = req.params.id;
+  const userID = req.cookies["user_id"];
+
+  //url must exist in database
+  if (!urlDatabase[id]) {
+    res.statusCode = 404;
+    res.send("Requested URL does not exist.");
+  }
+  //url must be associated with user
+  if (urlDatabase[id].userID !== userID) {
+    res.statusCode = 403;
+    res.send("This URL is not associated with this account.");
+  }
+
   urlDatabase[id] = req.body.updatedURL;
   res.redirect('/urls');
 });
@@ -165,7 +199,7 @@ app.post("/logout", (req, res) => {
   res.redirect('/urls');
 });
 
-//go to register page CHANGE
+//go to register page
 app.get("/register", (req, res) => {
   //redirect if logged in
   if (req.cookies["user_id"]) {
@@ -181,16 +215,30 @@ app.get("/register", (req, res) => {
 
 //open link after short URL creation
 app.get("/urls/:id", (req, res) => {
-  const id = req.params.id;
-  const templateVars = { 
-    id: id, 
-    longURL: (urlDatabase[id]) ? urlDatabase[id].longURL : undefined,
-    user: undefined 
-  };
-  if (req.cookies) {
-    const userID = req.cookies["user_id"];
-    templateVars.user = users[userID];
+  //must be logged in
+  if (!req.cookies["user_id"]) {
+    res.statusCode = 403;
+    res.send("Please login to continue.");
   }
+
+  const id = req.params.id;
+  const userID = req.cookies["user_id"];
+
+  //url must exist in database
+  if (!urlDatabase[id]) {
+    res.statusCode = 404;
+    res.send("Requested URL does not exist.");
+  }
+  //url must be associated with user
+  if (urlDatabase[id].userID !== userID) {
+    res.statusCode = 403;
+    res.send("This URL is not associated with this account.");
+  }
+  const templateVars = {
+    id: id,
+    longURL: urlDatabase[id],
+    user: users[userID]
+  };
   res.render('urls_show', templateVars);
 });
 
