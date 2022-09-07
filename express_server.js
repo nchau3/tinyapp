@@ -4,6 +4,7 @@ const PORT = 8080;
 const bcrypt = require("bcryptjs");
 const methodOverride = require('method-override');
 app.use(methodOverride('_method'));
+const { User, URL } = require('./classes');
 
 const cookieSession = require('cookie-session');
 app.use(cookieSession({
@@ -25,21 +26,6 @@ const urlDatabase = {
 };
 
 const users = {};
-
-class User {
-  constructor(id, email, password) {
-    this.id = id;
-    this.email = email;
-    this.password = password;
-  }
-}
-
-class URL {
-  constructor(longURL, userID) {
-    this.longURL = longURL;
-    this.userID = userID;
-  }
-}
 
 //go to homepage
 app.get("/", (req, res) => {
