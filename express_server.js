@@ -7,40 +7,20 @@ const PORT = 8080;
 app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
 
-const generateRandomString = function() {
-  let charSet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890';
-  let newString = '';
-  for (let i = 0; i < 6; i++) {
-    const randomIndex = Math.floor(Math.random() * charSet.length);
-    newString += charSet[randomIndex];
-  }
-  return newString;
-};
-
-const userLookupByEmail = function(email) {
-  for (let user in users) {
-    if (users[user].email === email) {
-      return user;
-    }
-  }
-  return null;
-};
-
-const urlsForUser = function(userID) {
-  let myDatabase = {};
-  for (let url in urlDatabase) {
-    const userMatch = urlDatabase[url]['userID'];
-    if (userMatch === userID) {
-      myDatabase[url] = urlDatabase[url];
-    }
-  }
-  return myDatabase;
-};
+const { generateRandomString, userLookupByEmail, urlsForUser } = require('./helpers');
 
 const urlDatabase = {
   "b2xVn2": {
     longURL: "http://www.lighthouselabs.ca",
     userID: 'testUser'
+  }
+};
+
+const users = {
+  sample: {
+    id: 'sample',
+    email: 'sample@sample.com',
+    password: '123mypassword'
   }
 };
 
@@ -59,14 +39,6 @@ class URL {
   }
 }
 
-const users = {
-  sample: {
-    id: 'sample',
-    email: 'sample@sample.com',
-    password: '123mypassword'
-  }
-};
-
 //go to homepage
 app.get("/", (req, res) => {
   res.redirect('/urls');
@@ -78,7 +50,7 @@ app.get("/urls", (req, res) => {
   if (req.cookies["user_id"]) {
     const userID = req.cookies["user_id"];
     templateVars.user = users[userID];
-    templateVars.urls = urlsForUser(userID);
+    templateVars.urls = urlsForUser(urlDatabase, userID);
   }
   res.render('urls_index', templateVars);
 });
@@ -180,7 +152,7 @@ app.get("/login", (req, res) => {
 
 //login
 app.post("/login", (req, res) => {
-  const checkUser = userLookupByEmail(req.body.email);
+  const checkUser = userLookupByEmail(users, req.body.email);
   if (!checkUser) {
     res.statusCode = 403;
     res.send("Email not found.");
@@ -213,7 +185,7 @@ app.get("/register", (req, res) => {
   res.render("urls_register", templateVars);
 });
 
-//open link after short URL creation
+//go to short URL confirmation/update page
 app.get("/urls/:id", (req, res) => {
   //must be logged in
   if (!req.cookies["user_id"]) {
@@ -236,7 +208,7 @@ app.get("/urls/:id", (req, res) => {
   }
   const templateVars = {
     id: id,
-    longURL: urlDatabase[id],
+    longURL: urlDatabase[id].longURL,
     user: users[userID]
   };
   res.render('urls_show', templateVars);
@@ -250,7 +222,7 @@ app.post("/register", (req, res) => {
     res.send("Please enter email and password");
   }
   //email already exists, return error
-  if (userLookupByEmail(req.body.email)) {
+  if (userLookupByEmail(users, req.body.email)) {
     res.statusCode = 400;
     res.send("This email already exists.");
   }
