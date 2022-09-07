@@ -1,6 +1,9 @@
 const express = require("express");
 const app = express();
 const PORT = 8080;
+const bcrypt = require("bcryptjs");
+const methodOverride = require('method-override');
+app.use(methodOverride('_method'));
 
 const cookieSession = require('cookie-session');
 app.use(cookieSession({
@@ -8,8 +11,6 @@ app.use(cookieSession({
   keys: ['user_id'],
   maxAge: 2 * 60 * 60 * 1000 // 2 hours expiry
 }));
-
-const bcrypt = require("bcryptjs");
 
 app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
@@ -78,7 +79,6 @@ app.get("/urls/new", (req, res) => {
   res.render("urls_new", templateVars);
 });
 
-
 //go to long URL
 app.get("/u/:id", (req, res) => {
   const key = req.params.id;
@@ -92,7 +92,7 @@ app.get("/u/:id", (req, res) => {
 });
 
 //delete URL
-app.post("/urls/:id/delete", (req, res) => {
+app.delete("/urls/:id", (req, res) => {
   //must be logged in
   if (!req.session.user_id) {
     res.statusCode = 403;
@@ -113,11 +113,14 @@ app.post("/urls/:id/delete", (req, res) => {
   }
 
   delete urlDatabase[req.params.id];
+
+  console.log(`updated urls: ${urlDatabase}`)
+
   res.redirect('/urls');
 });
 
 //update URL
-app.post("/urls/:id/", (req, res) => {
+app.put("/urls/:id", (req, res) => {
   //must be logged in
   if (!req.session.user_id) {
     res.statusCode = 403;
@@ -137,8 +140,7 @@ app.post("/urls/:id/", (req, res) => {
     res.statusCode = 403;
     res.send("This URL is not associated with this account.");
   }
-
-  urlDatabase[id] = req.body.updatedURL;
+  urlDatabase[id].longURL = req.body.updatedURL;
   res.redirect('/urls');
 });
 

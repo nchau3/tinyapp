@@ -25,7 +25,7 @@
     <div class="card text-center">
       <div class="card-body">
         <h4 class="card-subtitle mb-2 text-muted"><b>Edit</b></h4>
-          <form method="POST" action=<%= `/urls/${id}/` %> style="margin: auto; width: 575px;">
+          <form method="POST" action=<%= `/urls/${id}?_method=PUT` %> style="margin: auto; width: 575px;">
             <div class="form-group row">
               <label class="col-form-label text-muted" style="width: 85px">New URL:</label>
               <div>
