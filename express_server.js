@@ -1,8 +1,10 @@
 const express = require("express");
 const app = express();
+const PORT = 8080;
+
 const cookieParser = require("cookie-parser");
 app.use(cookieParser());
-const PORT = 8080;
+const bcrypt = require("bcryptjs");
 
 app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
@@ -152,12 +154,20 @@ app.get("/login", (req, res) => {
 
 //login
 app.post("/login", (req, res) => {
-  const checkUser = userLookupByEmail(users, req.body.email);
+  //empty fields, return error
+  if (!req.body.email || !req.body.password) {
+    res.statusCode = 400;
+    res.send("Please enter email and password.");
+  }
+  const userEmail = req.body.email;
+  const passwordEntered = req.body.password;
+  const checkUser = userLookupByEmail(users, userEmail);
+
   if (!checkUser) {
     res.statusCode = 403;
     res.send("Email not found.");
   }
-  if (users[checkUser].password !== req.body.password) {
+  if (!bcrypt.compareSync(passwordEntered, users[checkUser].password)) {
     res.statusCode = 403;
     res.send("Password does not match for his email address.");
   }
@@ -227,7 +237,8 @@ app.post("/register", (req, res) => {
     res.send("This email already exists.");
   }
   const newID = generateRandomString();
-  users[newID] = new User(newID, req.body.email, req.body.password);
+  hashedPassword = bcrypt.hashSync(req.body.password, 10);
+  users[newID] = new User(newID, req.body.email, hashedPassword);
   res.cookie('user_id', newID);
   res.redirect(`/urls/`);
 });
