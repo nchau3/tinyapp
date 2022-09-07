@@ -2,8 +2,13 @@ const express = require("express");
 const app = express();
 const PORT = 8080;
 
-const cookieParser = require("cookie-parser");
-app.use(cookieParser());
+const cookieSession = require('cookie-session');
+app.use(cookieSession({
+  name: 'session',
+  keys: ['user_id'],
+  maxAge: 2 * 60 * 60 * 1000 // 2 hours expiry
+}));
+
 const bcrypt = require("bcryptjs");
 
 app.set("view engine", "ejs");
@@ -18,13 +23,7 @@ const urlDatabase = {
   }
 };
 
-const users = {
-  sample: {
-    id: 'sample',
-    email: 'sample@sample.com',
-    password: '123mypassword'
-  }
-};
+const users = {};
 
 class User {
   constructor(id, email, password) {
@@ -49,8 +48,8 @@ app.get("/", (req, res) => {
 //go to homepage
 app.get("/urls", (req, res) => {
   const templateVars = { urls: undefined, user: undefined};
-  if (req.cookies["user_id"]) {
-    const userID = req.cookies["user_id"];
+  if (req.session.user_id) {
+    const userID = req.session.user_id;
     templateVars.user = users[userID];
     templateVars.urls = urlsForUser(urlDatabase, userID);
   }
@@ -59,7 +58,7 @@ app.get("/urls", (req, res) => {
 
 //create new URL
 app.post("/urls", (req, res) => {
-  const userID = req.cookies["user_id"];
+  const userID = req.session.user_id;
   const newID = generateRandomString();
   urlDatabase[newID] = new URL(req.body.longURL, userID);
   res.redirect(`/urls/${newID}`);
@@ -68,12 +67,12 @@ app.post("/urls", (req, res) => {
 //go to create page
 app.get("/urls/new", (req, res) => {
   //login before creating new urls
-  if (!req.cookies["user_id"]) {
+  if (!req.session.user_id) {
     res.redirect('/login');
   }
   const templateVars = { user: undefined };
-  if (req.cookies) {
-    const userID = req.cookies["user_id"];
+  if (req.session.user_id) {
+    const userID = req.session.user_id;
     templateVars.user = users[userID];
   }
   res.render("urls_new", templateVars);
@@ -95,12 +94,12 @@ app.get("/u/:id", (req, res) => {
 //delete URL
 app.post("/urls/:id/delete", (req, res) => {
   //must be logged in
-  if (!req.cookies["user_id"]) {
+  if (!req.session.user_id) {
     res.statusCode = 403;
     res.send("Please login to continue.");
   }
   const id = req.params.id;
-  const userID = req.cookies["user_id"];
+  const userID = req.session.user_id;
 
   //url must exist in database
   if (!urlDatabase[id]) {
@@ -120,13 +119,13 @@ app.post("/urls/:id/delete", (req, res) => {
 //update URL
 app.post("/urls/:id/", (req, res) => {
   //must be logged in
-  if (!req.cookies["user_id"]) {
+  if (!req.session.user_id) {
     res.statusCode = 403;
     res.send("Please login to continue.");
   }
 
   const id = req.params.id;
-  const userID = req.cookies["user_id"];
+  const userID = req.session.user_id;
 
   //url must exist in database
   if (!urlDatabase[id]) {
@@ -145,7 +144,7 @@ app.post("/urls/:id/", (req, res) => {
 
 //go to login page
 app.get("/login", (req, res) => {
-  if (req.cookies["user_id"]) {
+  if (req.session.user_id) {
     res.redirect('/urls');
   }
   const templateVars = { user: undefined };
@@ -171,25 +170,25 @@ app.post("/login", (req, res) => {
     res.statusCode = 403;
     res.send("Password does not match for his email address.");
   }
-  res.cookie('user_id', checkUser);
+  req.session.user_id = checkUser;
   res.redirect('/urls');
 });
 
 //logout
 app.post("/logout", (req, res) => {
-  res.clearCookie('user_id');
+  req.session = null;
   res.redirect('/urls');
 });
 
 //go to register page
 app.get("/register", (req, res) => {
   //redirect if logged in
-  if (req.cookies["user_id"]) {
+  if (req.session.user_id) {
     res.redirect('/urls');
   }
   const templateVars = { user: undefined };
-  if (req.cookies) {
-    const userID = req.cookies["user_id"];
+  if (req.session.user_id) {
+    const userID = req.session.user_id;
     templateVars.user = users[userID];
   }
   res.render("urls_register", templateVars);
@@ -198,13 +197,13 @@ app.get("/register", (req, res) => {
 //go to short URL confirmation/update page
 app.get("/urls/:id", (req, res) => {
   //must be logged in
-  if (!req.cookies["user_id"]) {
+  if (!req.session.user_id) {
     res.statusCode = 403;
     res.send("Please login to continue.");
   }
 
   const id = req.params.id;
-  const userID = req.cookies["user_id"];
+  const userID = req.session.user_id;
 
   //url must exist in database
   if (!urlDatabase[id]) {
@@ -237,9 +236,9 @@ app.post("/register", (req, res) => {
     res.send("This email already exists.");
   }
   const newID = generateRandomString();
-  hashedPassword = bcrypt.hashSync(req.body.password, 10);
+  const hashedPassword = bcrypt.hashSync(req.body.password, 10);
   users[newID] = new User(newID, req.body.email, hashedPassword);
-  res.cookie('user_id', newID);
+  req.session.user_id = newID;
   res.redirect(`/urls/`);
 });
 
