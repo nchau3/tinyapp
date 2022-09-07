@@ -18,19 +18,26 @@ const { generateRandomString, userLookupByEmail, urlsForUser } = require('./help
 const urlDatabase = {};
 const users = {};
 
-//redirect main directory to /urls
+//homepage
 app.get("/", (req, res) => {
-  res.redirect('/urls');
-});
-
-//go to homepage
-app.get("/urls", (req, res) => {
-  const templateVars = { urls: undefined, user: undefined};
+  const templateVars = { user: undefined };
   const {userID} = req.session;
   if (userID) {
-    templateVars.user = users[userID];
-    templateVars.urls = urlsForUser(urlDatabase, userID);
+    return res.redirect('/urls');
   }
+  res.render('urls_home', templateVars);
+});
+
+//go to My URLs
+app.get("/urls", (req, res) => {
+  const {userID} = req.session;
+  if (!userID) {
+    return res.redirect('/login');
+  }
+  const templateVars = {
+    urls: urlsForUser(urlDatabase, userID),
+    user: users[userID]
+  };
   res.render('urls_index', templateVars);
 });
 
@@ -40,7 +47,7 @@ app.get("/urls/new", (req, res) => {
   const templateVars = { user: users[userID] };
   //login before creating new urls
   if (!userID) {
-    res.redirect('/login');
+    return res.redirect('/login');
   }
   res.render("urls_new", templateVars);
 });
@@ -50,7 +57,7 @@ app.get("/login", (req, res) => {
   const {userID} = req.session;
   const templateVars = { user: undefined };
   if (userID) {
-    res.redirect('/urls');
+    return res.redirect('/urls');
   }
   res.render("urls_login", templateVars);
 });
@@ -79,7 +86,7 @@ app.post("/login", (req, res) => {
 //logout
 app.post("/logout", (req, res) => {
   req.session = null;
-  res.redirect('/urls');
+  res.redirect('/');
 });
 
 //go to register page
@@ -189,7 +196,7 @@ app.put("/urls/:id", (req, res) => {
   res.redirect('/urls');
 });
 
-  //delete URL
+//delete URL
 app.delete("/urls/:id", (req, res) => {
   const {userID} = req.session;
   const {id} = req.params;
