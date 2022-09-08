@@ -66,15 +66,17 @@ app.get("/login", (req, res) => {
 app.post("/login", (req, res) => {
   const { email, password } = req.body;
   const checkUser = userLookupByEmail(users, email);
-  //empty fields, return error
+  //empty fields
   if (!email || !password) {
     res.statusCode = 400;
     res.send("Please enter email and password.");
   }
+  //email not recognized
   if (!checkUser) {
     res.statusCode = 403;
     res.send("Email not found.");
   }
+  //password check
   if (!bcrypt.compareSync(password, users[checkUser].password)) {
     res.statusCode = 403;
     res.send("Password does not match for his email address.");
@@ -103,12 +105,12 @@ app.get("/register", (req, res) => {
 //adds new user with email & password, stores to users database
 app.post("/register", (req, res) => {
   const { email, password } = req.body;
-  //empty fields, return error
+  //empty fields
   if (!email || !password) {
     res.statusCode = 400;
     res.send("Please enter email and password");
   }
-  //email already exists, return error
+  //email already exists
   if (userLookupByEmail(users, email)) {
     res.statusCode = 400;
     res.send("This email already exists.");
