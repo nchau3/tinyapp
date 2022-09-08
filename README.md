@@ -4,15 +4,15 @@ TinyApp is a full stack web application built with Node and Express that allows 
 
 ## Final Product
 
-!["homepage"](#)
+!["homepage"](https://github.com/nchau3/tinyapp/blob/master/docs/homepage.png)
 
 User homepage.
 
-!["my URLS"](#)
+!["my URLS"](https://github.com/nchau3/tinyapp/blob/master/docs/myURLs.png)
 
 TinyApp provides secure login for multiple users and saves any shortened URLs to each account. Each entry can be updated with a different URL or deleted.
 
-!["URL stats/edit page"](#)
+!["URL stats/edit page"](https://github.com/nchau3/tinyapp/blob/master/docs/analytics.png)
 
 Analytics are displayed for each URL, including the number of unique visitors, recent clicks and total visits.
 
