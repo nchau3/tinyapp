@@ -55,9 +55,9 @@
       </table>
       <h3>Recent visits</h3>
       <hr style="width: 300px; margin-left: auto; margin-right: auto">
-        <% const visits = urls[id].visits %>
+        <% const visits = urls[id].visits.reverse() %>
         <% for (let visit of visits) { %>
-            <p>user <%= visit.visitor %> at <%= visit.date %>!</p>
+            <p>user <%= visit.visitor %> on <%= visit.date %>!</p>
         <% } %>
       <div class="card-footer text-muted"></div>
     </div>

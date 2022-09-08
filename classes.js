@@ -19,7 +19,7 @@ class URL {
 
   addVisit(visitorID) {
     const visitor = visitorID;
-    const date = new Date().toLocaleString("en-US", { hour12: true, timeZoneName: 'short' });
+    const date = new Date().toLocaleString("en-US", { hour12: true, timeZoneName: 'short', month: 'short', day: '2-digit', year: 'numeric', hour: 'numeric', minute: '2-digit', second: '2-digit' });
     const newVisit = { visitor, date }
     this.visits.push(newVisit);
   }

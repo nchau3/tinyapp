@@ -7,8 +7,7 @@ app.use(methodOverride('_method'));
 const cookieSession = require('cookie-session');
 app.use(cookieSession({
   name: 'session',
-  keys: ['userID', 'visitorID'],
-  maxAge: 2 * 60 * 60 * 1000 // 2 hours expiry
+  keys: ['userID', 'visitorID']
 }));
 app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
@@ -129,7 +128,12 @@ app.post("/urls", (req, res) => {
   //must be logged in
   if (!userID) {
     res.statusCode = 403;
-    res.send("Please login to continue.");
+    return res.send("Please login to continue.");
+  }
+  //no blank forms
+  if (!longURL) {
+    res.statusCode = 404;
+    return res.send("Please enter a URL.")
   }
   const newID = generateRandomString();
   urlDatabase[newID] = new URL(longURL, userID);
