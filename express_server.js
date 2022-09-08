@@ -7,14 +7,14 @@ app.use(methodOverride('_method'));
 const cookieSession = require('cookie-session');
 app.use(cookieSession({
   name: 'session',
-  keys: ['userID'],
+  keys: ['userID', 'visitorID'],
   maxAge: 2 * 60 * 60 * 1000 // 2 hours expiry
 }));
 app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
 
 const { User, URL } = require('./classes');
-const { generateRandomString, userLookupByEmail, urlsForUser } = require('./helpers');
+const { generateRandomString, userLookupByEmail, urlsForUser, checkVisitors } = require('./helpers');
 const urlDatabase = {};
 const users = {};
 
@@ -141,35 +141,44 @@ app.get("/urls/:id", (req, res) => {
   //must be logged in
   if (!userID) {
     res.statusCode = 403;
-    res.send("Please login to continue.");
+    return res.send("Please login to continue.");
   }
   //url must exist in database
   if (!urlDatabase[id]) {
     res.statusCode = 404;
-    res.send("Requested URL does not exist.");
+    return res.send("Requested URL does not exist.");
   }
   //url must be associated with user
   if (urlDatabase[id].userID !== userID) {
     res.statusCode = 403;
-    res.send("This URL is not associated with this account.");
+    return res.send("This URL is not associated with this account.");
   }
   const templateVars = {
     id: id,
-    longURL: urlDatabase[id].longURL,
+    urls: urlDatabase,
     user: users[userID]
   };
   res.render('urls_show', templateVars);
 });
 
-//go to long URL
+//go to long URL, track visitor analytics
 app.get("/u/:id", (req, res) => {
+  let {visitorID} = req.session;
   const {id} = req.params;
+  //URL must exist
   if (!urlDatabase[id]) {
     res.statusCode = 404;
     res.send("Requested URL does not exist.");
   }
-  const {longURL} = urlDatabase[id];
-  res.redirect(longURL);
+  //checks existing visitors list for URL, adds first time visitors
+  if (!checkVisitors(urlDatabase, id, visitorID)) {
+    visitorID = generateRandomString();
+    urlDatabase[id].visitors.push(visitorID);
+    req.session.visitorID = visitorID;
+  }
+  //adds visit to URL with timestamp
+  urlDatabase[id].addVisit(visitorID);
+  res.redirect(urlDatabase[id].longURL);
 });
 
 //update URL

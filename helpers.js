@@ -28,4 +28,14 @@ const urlsForUser = function(database, userID) {
   return myDatabase;
 };
 
-module.exports = { generateRandomString, userLookupByEmail, urlsForUser };
+const checkVisitors = function(database, urlID, visitorID) {
+  const visitorsList = database[urlID].visitors;
+  for (const visitor of visitorsList) {
+    if (visitor === visitorID) {
+      return true;
+    }
+  }
+  return false;
+};
+
+module.exports = { generateRandomString, userLookupByEmail, urlsForUser, checkVisitors };

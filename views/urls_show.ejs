@@ -16,9 +16,9 @@
     <div class="card text-center">
       <div class="card-header"></div>
       <div class="card-body">
-        <h5 class="card-title">TinyURL for: <%= longURL %></h5>
+        <h5 class="card-title">TinyURL for: <%= urls[id].longURL %></h5>
         <p class="card-text">
-          Short URL ID: <a href="/u/<%= id %>"><%= id %></a>
+          Short URL ID: <a href="/u/<%= id %>" target="_blank"><%= id %></a>
         </p>
       </div>
     </div>
@@ -33,7 +33,7 @@
                 class="form-control" 
                 type="text" 
                 name="updatedURL"
-                placeholder="<%= longURL %>" 
+                placeholder="<%= urls[id].longURL %>" 
                 style="width: 400px"
                 />
               </div>
@@ -41,6 +41,24 @@
             </div>
           </form>
       </div>
+      <table class="table" style="width: 350px; margin-left: auto; margin-right: auto">
+        <tfoot>
+          <tr>
+            <th scope="col">visits</th>
+            <th scope="col">visitors</th>
+          </tr>
+        </tfoot>
+        <tbody>
+          <td style="font-size: 50px"><%= urls[id].visits.length %></td>
+          <td style="font-size: 50px"><%= urls[id].visitors.length %></td>
+        </tbody>
+      </table>
+      <h3>Recent visits</h3>
+      <hr style="width: 300px; margin-left: auto; margin-right: auto">
+        <% const visits = urls[id].visits %>
+        <% for (let visit of visits) { %>
+            <p>user <%= visit.visitor %> at <%= visit.date %>!</p>
+        <% } %>
       <div class="card-footer text-muted"></div>
     </div>
     <!-- Bootstrap JS -->
